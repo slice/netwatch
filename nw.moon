@@ -35,8 +35,6 @@ class NetWatch
     for line in waiter\lines!
       print "- waiting failed: tries=#{tries}" if tries > 10
       if line\match("icmp_seq=") ~= nil
-        -- cannot close waiter here or else it will hang,
-        -- just bail
         break
       tries += 1
 
@@ -73,7 +71,8 @@ class NetWatch
     while true
       -- starting a new ping process
       print "* starting a new ping process (#{@slow_thresh}ms thresh)"
-      @ping\close! if @ping ~= nil
+      if @ping ~= nil
+        os.execute("pkill ping") -- kill remaining ping processes before starting anew
       @ping = io.popen("ping #{@ping_address} 2>&1")
 
       times = {}
