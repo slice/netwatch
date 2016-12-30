@@ -26,5 +26,6 @@ is revived.
 - lua 5.3 (untested with other versions)
 - luarocks
 - moonscript
+- luasocket (sleep)
 
 use moonscript to compile `nw.moon`

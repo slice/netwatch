@@ -33,9 +33,10 @@ class NetWatch
     tries = 0
 
     for line in waiter\lines!
-      if tries > 10
-        print "- waiting failed: tries=#{tries}"
+      print "- waiting failed: tries=#{tries}" if tries > 10
       if line\match("icmp_seq=") ~= nil
+        -- cannot close waiter here or else it will hang,
+        -- just bail
         break
       tries += 1
 
@@ -73,7 +74,7 @@ class NetWatch
       -- starting a new ping process
       print "* starting a new ping process (#{@slow_thresh}ms thresh)"
       @ping\close! if @ping ~= nil
-      @ping = io.popen "ping #{@ping_address} 2>&1"
+      @ping = io.popen("ping #{@ping_address} 2>&1")
 
       times = {}
       unde = 0
@@ -86,6 +87,8 @@ class NetWatch
         -- read the time
         time = line\match("time=(%d+)")
         table.insert(times, time)
+
+        -- calculate average
         avg_sum = 0
         for time in *times
           avg_sum += time
@@ -93,7 +96,7 @@ class NetWatch
 
         print "@ time: #{time}ms (#{avg}ms avg)" if time ~= nil
         if time ~= nil
-          ms = tonumber time
+          ms = tonumber(time)
           -- got back to desirable times, push back counter
           -- to zero
           if unde > 0 and ms < @slow_thresh
