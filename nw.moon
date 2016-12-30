@@ -4,6 +4,7 @@ mstime = -> socket.gettime! * 1000
 
 class Notifier
   notify: (text, body) ->
+    print "@ notify: #{text}, #{body}"
     os.execute("notify-send --icon=utilities-terminal \"#{text}\" \"#{body}\"")
 
 class NetWatch
@@ -48,9 +49,12 @@ class NetWatch
     @turn_off_network!
     @turn_on_network!
 
-  revive_network: =>
+  revive_network: (slow=false) =>
     time = mstime!
-    Notifier.notify("Your network is being revived.", "Please be patient.")
+    revive_body = if slow
+      "Your network is too slow."
+    else "Please be patient."
+    Notifier.notify("Your network is being revived.", revive_body)
 
     -- we are still connected to the network, but
     -- we have lost connectivity. we must revive the network
@@ -94,6 +98,8 @@ class NetWatch
       for line in @ping\lines!
         is_unreachable = line\match("unreachable") ~= nil or
           line\match("Unreachable") ~= nil
+        
+        was_slow = false
 
         -- read the time
         time = line\match("time=(%d+)")
@@ -103,7 +109,7 @@ class NetWatch
         avg_sum = 0
         for time in *times
           avg_sum += time
-        avg = avg_sum / #times
+        avg = math.floor(avg_sum / #times)
 
         print "@ time: #{time}ms (#{avg}ms avg)" if time ~= nil
         if time ~= nil
@@ -118,13 +124,14 @@ class NetWatch
             print "- undesirable times detected (##{unde}, #{ms}ms)"
             if unde >= 3
               print "- network is too slow, reviving"
+              was_slow = true
               is_unreachable = true
 
         io.stdout\flush!
 
         -- if we can't reach the ping_address, revive the network
         if is_unreachable
-          @revive_network!
+          @revive_network(was_slow)
           break
 
 nw = NetWatch!
