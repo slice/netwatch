@@ -1,4 +1,10 @@
-sleep = (require "socket").sleep
+socket = require "socket"
+sleep = socket.sleep
+mstime = -> socket.gettime! * 1000
+
+class Notifier
+  notify: (text, body) ->
+    os.execute("notify-send --icon=utilities-terminal \"#{text}\" \"#{body}\"")
 
 class NetWatch
   new: =>
@@ -43,6 +49,9 @@ class NetWatch
     @turn_on_network!
 
   revive_network: =>
+    time = mstime!
+    Notifier.notify("Your network is being revived.", "Please be patient.")
+
     -- we are still connected to the network, but
     -- we have lost connectivity. we must revive the network
 
@@ -64,6 +73,9 @@ class NetWatch
 
     -- restored! woohoo
     print "+ connectivity restored"
+    now = mstime!
+    dif = math.floor((now - time) / 1000)
+    Notifier.notify("Connectivity has been restored.", "Took #{dif}s.")
 
   monitor: =>
     print "* monitoring the network for downtime"
